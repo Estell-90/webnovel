@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>웹소설 · 웹툰 추천 카드뉴스</title>
+  <link rel="stylesheet" href="webnovel.css" />
+</head>
+<body>
+  <nav class="nav">
+    <button type="button" class="nav-btn active" data-view="today" aria-pressed="true">오늘</button>
+    <button type="button" class="nav-btn" data-view="archive" aria-pressed="false">아카이브</button>
+  </nav>
+
+  <div class="page" id="view-today">
+    <header class="page-header">
+      <h1 class="page-title">웹소설/웹툰 추천</h1>
+      <p class="page-date" id="today-label"></p>
+    </header>
+
+    <!-- 오늘의 (매일) : 날짜_1, 날짜_2 → 월요일에는 숨김 -->
+    <section class="block" id="block-daily" data-type="daily">
+      <div class="card-news card-news--today">
+        <div class="card-tab">★ 오늘의 추천 ★</div>
+        <div class="card-pair card-pair--daily">
+          <div class="card-img-wrap">
+            <img class="card-img" id="daily-1" alt="오늘의 추천 1" />
+          </div>
+          <div class="card-img-wrap">
+            <img class="card-img" id="daily-2" alt="오늘의 추천 2" />
+          </div>
+        </div>
+        <footer class="card-footer">네이버카페 | 웹소설매니아 &nbsp;·&nbsp; 오픈카톡 | 웹소설&amp;웹툰 추천수다방</footer>
+      </div>
+    </section>
+
+    <!-- 이번 주 추천 (위클리) : [W]날짜 → 월요일만 표시 -->
+    <section class="block hidden" id="block-weekly" data-type="weekly">
+      <div class="card-news card-news--week">
+        <div class="card-tab card-tab--heart">♥ 이번 주 추천 ♥</div>
+        <div class="card-img-wrap card-img-wrap--single">
+          <img class="card-img" id="weekly-img" alt="이번 주 추천" />
+        </div>
+        <footer class="card-footer">네이버카페 | 웹소설매니아 &nbsp;·&nbsp; 오픈카톡 | 웹소설&amp;웹툰 추천수다방</footer>
+      </div>
+    </section>
+
+    <!-- 이번 달 추천 (먼슬리) : [M]날짜 → 그달 마지막 날만 표시 -->
+    <section class="block hidden" id="block-monthly" data-type="monthly">
+      <div class="card-news card-news--month">
+        <div class="card-tab">이번 달 추천</div>
+        <div class="card-img-wrap card-img-wrap--single">
+          <img class="card-img" id="monthly-img" alt="이번 달 추천" />
+        </div>
+        <footer class="card-footer">네이버카페 | 웹소설매니아 &nbsp;·&nbsp; 오픈카톡 | 웹소설&amp;웹툰 추천수다방</footer>
+      </div>
+    </section>
+  </div>
+
+  <div class="page page--archive hidden" id="view-archive">
+    <header class="page-header">
+      <h1 class="page-title">아카이브</h1>
+      <p class="page-desc">키워드로 검색하거나 목록에서 날짜를 골라 과거 추천을 볼 수 있어요.</p>
+    </header>
+    <div class="archive-toolbar">
+      <input type="search" class="archive-search" id="archive-search" placeholder="제목, 플랫폼, 장르, 키워드 검색…" autocomplete="off" />
+      <select class="archive-type" id="archive-type" aria-label="유형 필터">
+        <option value="">전체</option>
+        <option value="daily">매일</option>
+        <option value="weekly">위클리</option>
+        <option value="monthly">먼슬리</option>
+      </select>
+    </div>
+    <div class="archive-list" id="archive-list"></div>
+    <p class="archive-empty hidden" id="archive-empty">검색 결과가 없어요. 다른 키워드로 시도해 보세요.</p>
+  </div>
+
+  <div class="archive-viewer hidden" id="archive-viewer">
+    <button type="button" class="archive-back" id="archive-back">← 목록으로</button>
+    <div class="archive-viewer-inner" id="archive-viewer-inner"></div>
+  </div>
+
+  <script>
+    var IMAGE_BASE_LOCAL = "./cards/";
+    var IMAGE_BASE_UPLOADS = "./uploads/";
+    /* Drive <img> 링크는 구글에서 자주 막힙니다. 로컬 파일을 쓰면 가장 확실합니다. */
+    var TRY_LOCAL_IMAGES_FIRST = true;
+    /* Drive URL 을 아예 쓰지 않으려면 false (drive-manifest 무시, cards/uploads 만) */
+    var USE_DRIVE_IN_MANIFEST = true;
+    var cardImageMap = {};
+    var PIXEL_GIF =
+      "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+
+    function manifestIdOrUrlForFile(filename) {
+      if (!USE_DRIVE_IN_MANIFEST) return null;
+      if (!filename) return null;
+      if (cardImageMap[filename]) return String(cardImageMap[filename]).trim();
+      var low = filename.toLowerCase();
+      var k;
+      for (k in cardImageMap) {
+        if (
+          Object.prototype.hasOwnProperty.call(cardImageMap, k) &&
+          k.toLowerCase() === low
+        ) {
+          return String(cardImageMap[k]).trim();
+        }
+      }
+      return null;
+    }
+
+    function driveImageUrlCandidates(fileId) {
+      var id = String(fileId).trim();
+      var enc = encodeURIComponent(id);
+      return [
+        "https://lh3.googleusercontent.com/d/" + id,
+        "https://drive.google.com/thumbnail?id=" + enc + "&sz=w2000",
+        "https://drive.google.com/uc?export=view&id=" + enc,
+        "https://drive.usercontent.google.com/uc?id=" + enc + "&export=view"
+      ];
+    }
+
+    function localImagePaths(filename) {
+      return [IMAGE_BASE_LOCAL + filename, IMAGE_BASE_UPLOADS + filename];
+    }
+
+    function bindCardImage(el, filename, opts) {
+      if (!el) return;
+      opts = opts || {};
+      el.referrerPolicy = "no-referrer";
+      el.loading = opts.eager ? "eager" : "lazy";
+      var raw = manifestIdOrUrlForFile(filename);
+      var remote = [];
+      if (raw && /^https?:\/\//i.test(raw)) {
+        remote.push(raw);
+      } else if (raw) {
+        remote = driveImageUrlCandidates(raw);
+      }
+      var local = localImagePaths(filename);
+      var chain = TRY_LOCAL_IMAGES_FIRST ? local.concat(remote) : remote.concat(local);
+
+      var i = 0;
+      el.onerror = function () {
+        i++;
+        if (i < chain.length) {
+          this.src = chain[i];
+        } else {
+          this.style.display = "none";
+        }
+      };
+      el.src = chain[0];
+    }
+
+    function mergeDriveFileMap(map) {
+      if (!map || typeof map !== "object") return;
+      var k;
+      for (k in map) {
+        if (Object.prototype.hasOwnProperty.call(map, k) && map[k]) {
+          cardImageMap[k] = map[k];
+        }
+      }
+    }
+
+    function loadCardImageIndex() {
+      return fetch("./drive-manifest.json")
+        .then(function (res) {
+          return res.ok ? res.json() : Promise.reject(new Error("HTTP " + res.status));
+        })
+        .then(function (data) {
+          if (data && typeof data === "object") mergeDriveFileMap(data);
+          var n = Object.keys(cardImageMap).length;
+          if (n === 0) {
+            console.warn(
+              "[webnovel] drive-manifest.json 이 비어 있거나 없습니다. " +
+                "update_drive_manifest.py 를 실행했는지 확인하세요."
+            );
+          }
+        })
+        .catch(function (err) {
+          console.warn(
+            "[webnovel] drive-manifest.json 을 불러오지 못했습니다.",
+            err && err.message ? err.message : err,
+            "→ index.html 을 file:// 로 연 경우 브라우저가 막습니다. " +
+              "webnovel 폴더에서 python -m http.server 후 http://localhost:8000/index.html 로 여세요."
+          );
+        });
+    }
+
+    function applyTodayCardImages() {
+      var today = new Date();
+      var y = today.getFullYear() % 100;
+      var m = today.getMonth() + 1;
+      var d = today.getDate();
+      var yy = String(y).padStart(2, "0");
+      var mm = String(m).padStart(2, "0");
+      var dd = String(d).padStart(2, "0");
+      var dateStr = yy + mm + dd;
+
+      var isMonday = today.getDay() === 1;
+      var lastDay = new Date(today.getFullYear(), m, 0).getDate();
+      var isLastDayOfMonth = d === lastDay;
+
+      var options = { year: "numeric", month: "long", day: "numeric", weekday: "long" };
+      var labelEl = document.getElementById("today-label");
+      if (labelEl) labelEl.textContent = today.toLocaleDateString("ko-KR", options);
+
+      function setImg(id, filename) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.style.display = "";
+        bindCardImage(el, filename, { eager: true });
+      }
+
+      function showBlock(id) {
+        var el = document.getElementById(id);
+        if (el) el.classList.remove("hidden");
+      }
+
+      function hideBlock(id) {
+        var el = document.getElementById(id);
+        if (el) el.classList.add("hidden");
+      }
+
+      if (isMonday) {
+        hideBlock("block-daily");
+        showBlock("block-weekly");
+        setImg("weekly-img", "[W]" + dateStr + ".png");
+      } else {
+        showBlock("block-daily");
+        hideBlock("block-weekly");
+        setImg("daily-1", dateStr + "_1.png");
+        setImg("daily-2", dateStr + "_2.png");
+      }
+
+      if (isLastDayOfMonth) {
+        showBlock("block-monthly");
+        setImg("monthly-img", "[M]" + dateStr + ".png");
+      } else {
+        hideBlock("block-monthly");
+      }
+
+      if (!isMonday) {
+        if (!manifestIdOrUrlForFile(dateStr + "_1.png")) {
+          console.warn(
+            "[webnovel] drive-manifest.json 에 " +
+              dateStr +
+              "_1.png / _2.png 가 없습니다. Drive에 해당 이름으로 올린 뒤 python update_drive_manifest.py 를 다시 실행하세요."
+          );
+        }
+      } else if (!manifestIdOrUrlForFile("[W]" + dateStr + ".png")) {
+        console.warn(
+          "[webnovel] drive-manifest.json 에 [W]" +
+            dateStr +
+            ".png 가 없습니다. Drive에 올린 뒤 python update_drive_manifest.py 를 다시 실행하세요."
+        );
+      }
+    }
+
+    applyTodayCardImages();
+    loadCardImageIndex().then(function () {
+      applyTodayCardImages();
+    });
+
+    (function () {
+      var archiveData = [];
+      var DEFAULT_FOOTER_HTML =
+        "네이버카페 | 웹소설매니아 &nbsp;·&nbsp; 오픈카톡 | 웹소설&amp;웹툰 추천수다방";
+      var FOOTER_HTML = DEFAULT_FOOTER_HTML;
+      var listEl = document.getElementById("archive-list");
+      var emptyEl = document.getElementById("archive-empty");
+      var searchEl = document.getElementById("archive-search");
+      var typeEl = document.getElementById("archive-type");
+      var viewerEl = document.getElementById("archive-viewer");
+      var viewerInner = document.getElementById("archive-viewer-inner");
+      var backBtn = document.getElementById("archive-back");
+      var viewToday = document.getElementById("view-today");
+      var viewArchive = document.getElementById("view-archive");
+      var navBtns = document.querySelectorAll(".nav-btn");
+
+      function escapeHtml(s) {
+        if (s == null || s === "") return "";
+        return String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function pad2(n) {
+        return String(n).padStart(2, "0");
+      }
+
+      function parseKoreanDateToYYMMDD(s) {
+        if (!s || !String(s).trim()) return null;
+        var m = String(s).match(/(\d{2,4})\s*\.\s*(\d{1,2})\s*\.\s*(\d{1,2})/);
+        if (!m) return null;
+        var yRaw = m[1];
+        var yy = yRaw.length >= 4 ? yRaw.slice(-2) : pad2(parseInt(yRaw, 10) % 100);
+        var mm = pad2(parseInt(m[2], 10));
+        var dd = pad2(parseInt(m[3], 10));
+        return yy + mm + dd;
+      }
+
+      function lastDayYYMMDDInMonth(yymmdd) {
+        if (!yymmdd || yymmdd.length !== 6) return yymmdd;
+        var y = parseInt(yymmdd.slice(0, 2), 10);
+        var mo = parseInt(yymmdd.slice(2, 4), 10);
+        var yyyy = y + 2000;
+        var last = new Date(yyyy, mo, 0);
+        var y2 = last.getFullYear() % 100;
+        return pad2(y2) + pad2(last.getMonth() + 1) + pad2(last.getDate());
+      }
+
+      function cellText(cells, i) {
+        if (!cells || i >= cells.length) return "";
+        return (cells[i].textContent || "").trim();
+      }
+
+      function parseSheet1ToArchive(doc) {
+        var table = doc.querySelector("table.waffle");
+        if (!table) return [];
+        var tbody =
+          table.tBodies && table.tBodies[0]
+            ? table.tBodies[0]
+            : table.querySelector("tbody");
+        if (!tbody) return [];
+        var trs = tbody.querySelectorAll("tr");
+        var items = [];
+        for (var ri = 3; ri < trs.length; ri++) {
+          var cells = trs[ri].cells;
+          if (!cells || cells.length < 12) continue;
+
+          var dDate = parseKoreanDateToYYMMDD(cellText(cells, 0));
+          var dTitle = cellText(cells, 2);
+          if (dDate && dTitle) {
+            var kwDaily = [cellText(cells, 5), cellText(cells, 6)].filter(Boolean).join(" ");
+            items.push({
+              date: dDate,
+              type: "daily",
+              title: dTitle,
+              platform: cellText(cells, 3),
+              genre: cellText(cells, 4),
+              keywords: kwDaily
+            });
+          }
+
+          var wDate = parseKoreanDateToYYMMDD(cellText(cells, 8));
+          var wTitle = cellText(cells, 11);
+          if (wDate && wTitle) {
+            var kwW = [cellText(cells, 13), cellText(cells, 14)].filter(Boolean).join(" ");
+            items.push({
+              date: wDate,
+              type: "weekly",
+              title: wTitle,
+              platform: cellText(cells, 12),
+              genre: "",
+              keywords: kwW
+            });
+          }
+
+          var mTitle = cellText(cells, 19);
+          if (mTitle && dDate) {
+            var mDate = lastDayYYMMDDInMonth(dDate);
+            var kwM = [cellText(cells, 21), cellText(cells, 22)].filter(Boolean).join(" ");
+            items.push({
+              date: mDate,
+              type: "monthly",
+              title: mTitle,
+              platform: cellText(cells, 20),
+              genre: "",
+              keywords: kwM
+            });
+          }
+        }
+
+        items.sort(function (a, b) {
+          if (a.date !== b.date) return b.date.localeCompare(a.date);
+          var order = { daily: 0, weekly: 1, monthly: 2 };
+          return (order[a.type] || 0) - (order[b.type] || 0);
+        });
+        return items;
+      }
+
+      function parseLinkHtml(doc) {
+        var rows = doc.querySelectorAll("table.waffle tbody tr");
+        var out = [];
+        for (var i = 0; i < rows.length; i++) {
+          var cells = rows[i].cells;
+          if (cells.length < 2) continue;
+          var label = cellText(cells, 0);
+          var a = cells[1].querySelector("a[href]");
+          var href = a ? (a.getAttribute("href") || "").trim() : "";
+          if (label && href.indexOf("http") === 0) out.push({ label: label, href: href });
+        }
+        return out;
+      }
+
+      function buildFooterFromLinks(links) {
+        if (!links || !links.length) return DEFAULT_FOOTER_HTML;
+        var parts = links.map(function (l) {
+          return (
+            "<a href=\"" +
+            escapeHtml(l.href) +
+            "\" target=\"_blank\" rel=\"noopener noreferrer\">" +
+            escapeHtml(l.label) +
+            "</a>"
+          );
+        });
+        return (
+          parts.join(" &nbsp;·&nbsp; ") +
+          " &nbsp;·&nbsp; 오픈카톡 | 웹소설&amp;웹툰 추천수다방"
+        );
+      }
+
+      function applyFooterToCards(html) {
+        FOOTER_HTML = html;
+        document.querySelectorAll(".card-footer").forEach(function (el) {
+          el.innerHTML = html;
+        });
+      }
+
+      function formatDate(str) {
+        if (!str || str.length !== 6) return str;
+        var y = "20" + str.slice(0, 2);
+        var m = str.slice(2, 4);
+        var d = str.slice(4, 6);
+        return y + "." + m + "." + d;
+      }
+
+      function typeLabel(type) {
+        if (type === "daily") return "매일";
+        if (type === "weekly") return "위클리";
+        if (type === "monthly") return "먼슬리";
+        return "";
+      }
+
+      function matchItem(item, query, typeFilter) {
+        if (typeFilter && item.type !== typeFilter) return false;
+        if (!query || !query.trim()) return true;
+        var q = query.trim().toLowerCase();
+        var text = [item.title, item.platform, item.genre, item.keywords].filter(Boolean).join(" ");
+        var keywords = (item.keywords || "").split(/[,，\s]+/).filter(Boolean);
+        var combined = (text + " " + keywords.join(" ")).toLowerCase();
+        return combined.indexOf(q) !== -1;
+      }
+
+      function renderList() {
+        var query = searchEl ? searchEl.value : "";
+        var typeFilter = typeEl ? typeEl.value : "";
+        var filtered = archiveData.filter(function (item) {
+          return matchItem(item, query, typeFilter);
+        });
+
+        if (!listEl) return;
+        listEl.innerHTML = "";
+        if (emptyEl) emptyEl.classList.add("hidden");
+
+        if (filtered.length === 0) {
+          if (emptyEl) emptyEl.classList.remove("hidden");
+          return;
+        }
+
+        filtered.forEach(function (item) {
+          var thumbFile =
+            item.type === "daily"
+              ? item.date + "_1.png"
+              : item.type === "weekly"
+                ? "[W]" + item.date + ".png"
+                : "[M]" + item.date + ".png";
+          var li = document.createElement("button");
+          li.type = "button";
+          li.className = "archive-item";
+          li.dataset.date = item.date;
+          li.dataset.type = item.type;
+          li.innerHTML =
+            "<span class=\"archive-item-thumb-wrap\"><img class=\"archive-item-thumb\" alt=\"\" src=\"" +
+            PIXEL_GIF +
+            "\" /></span>" +
+            "<span class=\"archive-item-body\">" +
+            "<span class=\"archive-item-type\">" +
+            typeLabel(item.type) +
+            "</span>" +
+            "<span class=\"archive-item-date\">" +
+            formatDate(item.date) +
+            "</span>" +
+            "<span class=\"archive-item-title\">" +
+            escapeHtml(item.title || "-") +
+            "</span>" +
+            "<span class=\"archive-item-meta\">" +
+            escapeHtml((item.platform || "") + " · " + (item.genre || "")) +
+            "</span></span>";
+          bindCardImage(li.querySelector(".archive-item-thumb"), thumbFile);
+          li.addEventListener("click", function () {
+            openViewer(item.date, item.type);
+          });
+          listEl.appendChild(li);
+        });
+      }
+
+      function openViewer(dateStr, type) {
+        if (!viewerInner) return;
+        var html = "";
+        var footer = FOOTER_HTML;
+
+        if (type === "daily") {
+          html =
+            "<div class=\"card-news card-news--today\">" +
+            "<div class=\"card-tab\">★ 오늘의 추천 ★</div>" +
+            "<div class=\"card-pair card-pair--daily\">" +
+            "<div class=\"card-img-wrap\"><img class=\"card-img\" alt=\"\" src=\"" +
+            PIXEL_GIF +
+            "\" data-card-file=\"" +
+            dateStr +
+            "_1.png\" /></div>" +
+            "<div class=\"card-img-wrap\"><img class=\"card-img\" alt=\"\" src=\"" +
+            PIXEL_GIF +
+            "\" data-card-file=\"" +
+            dateStr +
+            "_2.png\" /></div>" +
+            "</div><footer class=\"card-footer\">" + footer + "</footer></div>";
+        } else if (type === "weekly") {
+          html =
+            "<div class=\"card-news card-news--week\">" +
+            "<div class=\"card-tab card-tab--heart\">♥ 이번 주 추천 ♥</div>" +
+            "<div class=\"card-img-wrap card-img-wrap--single\"><img class=\"card-img\" alt=\"\" src=\"" +
+            PIXEL_GIF +
+            "\" data-card-file=\"[W]" +
+            dateStr +
+            ".png\" /></div>" +
+            "<footer class=\"card-footer\">" + footer + "</footer></div>";
+        } else if (type === "monthly") {
+          html =
+            "<div class=\"card-news card-news--month\">" +
+            "<div class=\"card-tab\">이번 달 추천</div>" +
+            "<div class=\"card-img-wrap card-img-wrap--single\"><img class=\"card-img\" alt=\"\" src=\"" +
+            PIXEL_GIF +
+            "\" data-card-file=\"[M]" +
+            dateStr +
+            ".png\" /></div>" +
+            "<footer class=\"card-footer\">" + footer + "</footer></div>";
+        }
+
+        viewerInner.innerHTML = html;
+        viewerInner.querySelectorAll("img.card-img[data-card-file]").forEach(function (im) {
+          bindCardImage(im, im.getAttribute("data-card-file") || "", { eager: true });
+        });
+        if (viewerEl) viewerEl.classList.remove("hidden");
+      }
+
+      function closeViewer() {
+        if (viewerEl) viewerEl.classList.add("hidden");
+      }
+
+      if (backBtn) backBtn.addEventListener("click", closeViewer);
+
+      if (searchEl) searchEl.addEventListener("input", renderList);
+      if (typeEl) typeEl.addEventListener("change", renderList);
+
+      navBtns.forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var view = this.getAttribute("data-view");
+          navBtns.forEach(function (b) {
+            b.classList.remove("active");
+            b.setAttribute("aria-pressed", "false");
+          });
+          this.classList.add("active");
+          this.setAttribute("aria-pressed", "true");
+          if (view === "today") {
+            if (viewToday) viewToday.classList.remove("hidden");
+            if (viewArchive) viewArchive.classList.add("hidden");
+            if (viewerEl) viewerEl.classList.add("hidden");
+          } else {
+            if (viewToday) viewToday.classList.add("hidden");
+            if (viewArchive) viewArchive.classList.remove("hidden");
+          }
+        });
+      });
+
+      function fetchTextTryUrls(urls) {
+        var i = 0;
+        function next() {
+          if (i >= urls.length) return Promise.resolve(null);
+          var u = urls[i++];
+          return fetch(u, { cache: "no-store" })
+            .then(function (res) {
+              return res.ok ? res.text() : next();
+            })
+            .catch(function () {
+              return next();
+            });
+        }
+        return next();
+      }
+
+      function bootArchive() {
+        var subKo = "웹소설_웹툰 추천 리스트";
+        var pSheet = fetchTextTryUrls([
+          "./sheet1.html",
+          "./" + encodeURI(subKo + "/시트1.html")
+        ]).then(function (text) {
+          if (!text) {
+            console.warn(
+              "[webnovel] sheet1.html 을 불러오지 못했습니다. Live Server 루트가 webnovel 폴더인지, 같은 폴더에 sheet1.html 이 있는지 확인하세요."
+            );
+          }
+          return text;
+        });
+        var pLink = fetchTextTryUrls([
+          "./link.html",
+          "./" + encodeURI(subKo + "/링크.html")
+        ]);
+        var pJson = fetch("./archive.json", { cache: "no-store" })
+          .then(function (res) {
+            return res.ok ? res.json() : Promise.reject();
+          })
+          .catch(function () {
+            return null;
+          });
+
+        Promise.all([pSheet, pLink, pJson]).then(function (tuple) {
+          var sheetText = tuple[0];
+          var linkText = tuple[1];
+          var jsonData = tuple[2];
+          var parser = new DOMParser();
+          var items = [];
+
+          if (sheetText) {
+            var sdoc = parser.parseFromString(sheetText, "text/html");
+            items = parseSheet1ToArchive(sdoc);
+            if (!items.length) {
+              console.warn(
+                "[webnovel] 시트 HTML은 받았지만 파싱된 아카이브가 0개입니다. 시트보내기 형식이 바뀌었을 수 있습니다."
+              );
+            }
+          }
+          if (!items.length && jsonData && jsonData.items) {
+            items = jsonData.items;
+            if (items.length) {
+              console.info(
+                "[webnovel] 아카이브는 archive.json (" + items.length + "개) 에서 불러왔습니다."
+              );
+            }
+          }
+          if (!items.length) {
+            console.warn(
+              "[webnovel] 아카이브가 비었습니다. 터미널에서 python build_archive_json.py 를 실행해 archive.json 을 만드세요."
+            );
+          }
+
+          archiveData = items;
+          renderList();
+
+          var linkHtmlBuilt = DEFAULT_FOOTER_HTML;
+          if (linkText) {
+            var ldoc = parser.parseFromString(linkText, "text/html");
+            var links = parseLinkHtml(ldoc);
+            linkHtmlBuilt = buildFooterFromLinks(links);
+          }
+          applyFooterToCards(linkHtmlBuilt);
+        });
+      }
+
+      bootArchive();
+    })();
+  </script>
+</body>
+</html>
