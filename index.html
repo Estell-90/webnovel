@@ -3,25 +3,39 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>웹소설 · 웹툰 추천 카드뉴스</title>
+  <meta name="description" content="웹소설·웹툰 추천과 키워드 아카이브" />
+  <meta name="theme-color" content="#3d2863" />
+  <title>웹소설 웹툰 추천</title>
   <link rel="stylesheet" href="webnovel.css" />
+  <link rel="dns-prefetch" href="https://open.kakao.com" />
+  <link rel="dns-prefetch" href="https://blog.naver.com" />
 </head>
-<body>
-  <nav class="nav">
+<body class="app-body">
+  <div class="app-content">
+  <header class="app-brand">
+    <h1 class="app-brand-title">
+      <span class="app-brand-heart" aria-hidden="true">♥</span>
+      웹소설 웹툰 추천
+      <span class="app-brand-heart" aria-hidden="true">♥</span>
+    </h1>
+  </header>
+  <nav class="nav" aria-label="메인 탭">
     <button type="button" class="nav-btn active" data-view="today" aria-pressed="true">오늘</button>
     <button type="button" class="nav-btn" data-view="archive" aria-pressed="false">아카이브</button>
   </nav>
 
   <div class="page" id="view-today">
-    <header class="page-header">
-      <h1 class="page-title">웹소설/웹툰 추천</h1>
-      <p class="page-date" id="today-label"></p>
-    </header>
+    <div class="today-head">
+      <div class="today-nav" role="group" aria-label="날짜 이동">
+        <button type="button" class="today-nav-btn" id="today-prev" aria-label="하루 전">←</button>
+        <p class="page-date" id="today-label"></p>
+        <button type="button" class="today-nav-btn" id="today-next" aria-label="하루 후 (오늘 쪽으로)" disabled>→</button>
+      </div>
+    </div>
 
     <!-- 오늘의 (매일) : 날짜_1, 날짜_2 → 월요일에는 숨김 -->
     <section class="block" id="block-daily" data-type="daily">
       <div class="card-news card-news--today">
-        <div class="card-tab">★ 오늘의 추천 ★</div>
         <div class="card-pair card-pair--daily">
           <div class="card-img-wrap">
             <img class="card-img" id="daily-1" alt="오늘의 추천 1" />
@@ -58,8 +72,8 @@
   </div>
 
   <div class="page page--archive hidden" id="view-archive">
-    <header class="page-header">
-      <h1 class="page-title">아카이브</h1>
+    <header class="archive-head">
+      <h2 class="archive-head-title">아카이브</h2>
       <p class="page-desc">키워드로 검색하거나 목록에서 날짜를 골라 과거 추천을 볼 수 있어요.</p>
     </header>
     <div class="archive-toolbar">
@@ -74,6 +88,46 @@
     <div class="archive-list" id="archive-list"></div>
     <p class="archive-empty hidden" id="archive-empty">검색 결과가 없어요. 다른 키워드로 시도해 보세요.</p>
   </div>
+  </div>
+
+  <footer class="site-footer" role="contentinfo">
+    <div class="site-footer-divider" aria-hidden="true"></div>
+    <div class="site-footer-inner">
+      <div class="site-footer-links">
+        <a
+          class="site-footer-link site-footer-link--kakao"
+          href="https://open.kakao.com/o/g27r3fLg"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <span class="site-footer-link-icon" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <rect width="24" height="24" rx="7" fill="#FEE500" />
+              <path
+                fill="#191919"
+                d="M6.75 11.25c0-.41.34-.75.75-.75h1.5c.41 0 .75.34.75.75v1.5c0 .41-.34.75-.75.75h-1.5a.75.75 0 0 1-.75-.75v-1.5zm4 0c0-.41.34-.75.75-.75h1.5c.41 0 .75.34.75.75v1.5c0 .41-.34.75-.75.75h-1.5a.75.75 0 0 1-.75-.75v-1.5zm4 0c0-.41.34-.75.75-.75h1.5c.41 0 .75.34.75.75v1.5c0 .41-.34.75-.75.75h-1.5a.75.75 0 0 1-.75-.75v-1.5z"
+              />
+            </svg>
+          </span>
+          <span>오픈카톡 · 추천수다방</span>
+        </a>
+        <a
+          class="site-footer-link site-footer-link--blog"
+          href="https://blog.naver.com/ss_bookshelf"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <span class="site-footer-link-icon site-footer-link-icon--blog" aria-hidden="true">📝</span>
+          <span>네이버 블로그 · 독서리뷰</span>
+        </a>
+      </div>
+      <p class="site-footer-tagline">
+        <span class="site-footer-tagline-heart" aria-hidden="true">♡</span>
+        웹소설 웹툰 추천
+        <span class="site-footer-tagline-heart" aria-hidden="true">♡</span>
+      </p>
+    </div>
+  </footer>
 
   <div class="archive-viewer hidden" id="archive-viewer">
     <button type="button" class="archive-back" id="archive-back">← 목록으로</button>
@@ -87,6 +141,7 @@
     var TRY_LOCAL_IMAGES_FIRST = true;
     /* Drive URL 을 아예 쓰지 않으려면 false (drive-manifest 무시, cards/uploads 만) */
     var USE_DRIVE_IN_MANIFEST = true;
+    var todayViewOffsetDays = 0;
     var cardImageMap = {};
     var PIXEL_GIF =
       "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
@@ -185,23 +240,47 @@
         });
     }
 
+    function addCalendarDays(base, delta) {
+      var d = new Date(base.getFullYear(), base.getMonth(), base.getDate() + delta);
+      return d;
+    }
+
+    function updateTodayNavButtons() {
+      var nextBtn = document.getElementById("today-next");
+      if (nextBtn) {
+        var atToday = todayViewOffsetDays >= 0;
+        nextBtn.disabled = atToday;
+        nextBtn.setAttribute("aria-disabled", atToday ? "true" : "false");
+      }
+    }
+
     function applyTodayCardImages() {
-      var today = new Date();
-      var y = today.getFullYear() % 100;
-      var m = today.getMonth() + 1;
-      var d = today.getDate();
+      if (todayViewOffsetDays > 0) todayViewOffsetDays = 0;
+      var now = new Date();
+      var viewDate = addCalendarDays(now, todayViewOffsetDays);
+      var y = viewDate.getFullYear() % 100;
+      var m = viewDate.getMonth() + 1;
+      var d = viewDate.getDate();
       var yy = String(y).padStart(2, "0");
       var mm = String(m).padStart(2, "0");
       var dd = String(d).padStart(2, "0");
       var dateStr = yy + mm + dd;
 
-      var isMonday = today.getDay() === 1;
-      var lastDay = new Date(today.getFullYear(), m, 0).getDate();
+      var isMonday = viewDate.getDay() === 1;
+      var lastDay = new Date(viewDate.getFullYear(), m, 0).getDate();
       var isLastDayOfMonth = d === lastDay;
 
       var options = { year: "numeric", month: "long", day: "numeric", weekday: "long" };
       var labelEl = document.getElementById("today-label");
-      if (labelEl) labelEl.textContent = today.toLocaleDateString("ko-KR", options);
+      if (labelEl) {
+        var line = viewDate.toLocaleDateString("ko-KR", options);
+        if (todayViewOffsetDays === -1) {
+          line = "어제 · " + line;
+        } else if (todayViewOffsetDays < -1) {
+          line = Math.abs(todayViewOffsetDays) + "일 전 · " + line;
+        }
+        labelEl.textContent = line;
+      }
 
       function setImg(id, filename) {
         var el = document.getElementById(id);
@@ -253,7 +332,27 @@
             ".png 가 없습니다. Drive에 올린 뒤 python update_drive_manifest.py 를 다시 실행하세요."
         );
       }
+      updateTodayNavButtons();
     }
+
+    (function setupTodayNav() {
+      var prevBtn = document.getElementById("today-prev");
+      var nextBtn = document.getElementById("today-next");
+      if (prevBtn) {
+        prevBtn.addEventListener("click", function () {
+          todayViewOffsetDays -= 1;
+          applyTodayCardImages();
+        });
+      }
+      if (nextBtn) {
+        nextBtn.addEventListener("click", function () {
+          if (todayViewOffsetDays < 0) {
+            todayViewOffsetDays += 1;
+            applyTodayCardImages();
+          }
+        });
+      }
+    })();
 
     applyTodayCardImages();
     loadCardImageIndex().then(function () {
@@ -315,6 +414,78 @@
         return (cells[i].textContent || "").trim();
       }
 
+      function findHashtagColumnIndex(trs) {
+        if (!trs || trs.length < 2) return -1;
+        var cells = trs[1].cells;
+        var i;
+        for (i = 0; i < cells.length; i++) {
+          var t = (cells[i].textContent || "").trim();
+          if (/해시\s*태그|해쉬\s*태그/i.test(t)) return i;
+        }
+        return -1;
+      }
+
+      /** 매일 구간(열 0~7) 헤더에서 "키워드" 열 인덱스 */
+      function findDailyKeywordColumnIndex(trs) {
+        if (!trs || trs.length < 2) return -1;
+        var cells = trs[1].cells;
+        var i;
+        for (i = 0; i < cells.length; i++) {
+          if (i > 7) break;
+          var t = (cells[i].textContent || "").trim();
+          if (/^키워드\s*$/.test(t)) return i;
+        }
+        return -1;
+      }
+
+      function joinKeywordParts(parts) {
+        var out = [];
+        var j;
+        for (j = 0; j < parts.length; j++) {
+          var s = parts[j] && String(parts[j]).trim();
+          if (s) out.push(s);
+        }
+        return out.join(" · ");
+      }
+
+      function normalizeItemKeywords(item) {
+        if (!item) return;
+        var kw = (item.keywords && String(item.keywords).trim()) || "";
+        var ht = (item.hashtags && String(item.hashtags).trim()) || "";
+        if (ht) {
+          item.keywords = joinKeywordParts([kw, ht]);
+          item.hashtags = "";
+        }
+      }
+
+      function startOfTodayLocal() {
+        var t = new Date();
+        t.setHours(0, 0, 0, 0);
+        return t.getTime();
+      }
+
+      function yymmddToMidnightTime(yymmdd) {
+        if (!yymmdd || String(yymmdd).length !== 6) return null;
+        var yy = parseInt(String(yymmdd).slice(0, 2), 10);
+        var mo = parseInt(String(yymmdd).slice(2, 4), 10) - 1;
+        var dd = parseInt(String(yymmdd).slice(4, 6), 10);
+        var d = new Date(2000 + yy, mo, dd);
+        d.setHours(0, 0, 0, 0);
+        return d.getTime();
+      }
+
+      function isFutureArchiveDate(yymmdd) {
+        var itemT = yymmddToMidnightTime(yymmdd);
+        if (itemT == null) return false;
+        return itemT > startOfTodayLocal();
+      }
+
+      function extractHashTagsFromText(s) {
+        if (!s) return "";
+        var m = String(s).match(/#[^\s#，,]+/g);
+        return m ? m.join(" ") : "";
+      }
+
       function parseSheet1ToArchive(doc) {
         var table = doc.querySelector("table.waffle");
         if (!table) return [];
@@ -324,51 +495,92 @@
             : table.querySelector("tbody");
         if (!tbody) return [];
         var trs = tbody.querySelectorAll("tr");
+        var tagCol = findHashtagColumnIndex(trs);
+        var dailyKwCol = findDailyKeywordColumnIndex(trs);
         var items = [];
+        var lastWeeklyYymmdd = null;
+        var lastWeeklyPlatform = "";
+        var lastWeeklyKeywords = "";
+        var lastMonthlyDateStr = null;
+        var lastMPlatform = "";
+        var lastMKeywords = "";
         for (var ri = 3; ri < trs.length; ri++) {
           var cells = trs[ri].cells;
           if (!cells || cells.length < 12) continue;
 
+          var rowTags = tagCol >= 0 ? cellText(cells, tagCol) : "";
+
           var dDate = parseKoreanDateToYYMMDD(cellText(cells, 0));
           var dTitle = cellText(cells, 2);
           if (dDate && dTitle) {
-            var kwDaily = [cellText(cells, 5), cellText(cells, 6)].filter(Boolean).join(" ");
+            var kwDailyBase =
+              dailyKwCol >= 0
+                ? cellText(cells, dailyKwCol)
+                : [cellText(cells, 5), cellText(cells, 6)].filter(Boolean).join(" ");
+            var kwDaily = joinKeywordParts([kwDailyBase, rowTags]);
             items.push({
               date: dDate,
               type: "daily",
               title: dTitle,
               platform: cellText(cells, 3),
               genre: cellText(cells, 4),
-              keywords: kwDaily
+              keywords: kwDaily,
+              hashtags: ""
             });
           }
 
-          var wDate = parseKoreanDateToYYMMDD(cellText(cells, 8));
+          var wDateCell = parseKoreanDateToYYMMDD(cellText(cells, 8));
+          if (wDateCell) lastWeeklyYymmdd = wDateCell;
+          var wPlRaw = cellText(cells, 12);
+          if (wPlRaw) lastWeeklyPlatform = wPlRaw;
+          var wKwRaw = cellText(cells, 13);
+          if (wKwRaw) lastWeeklyKeywords = wKwRaw;
           var wTitle = cellText(cells, 11);
-          if (wDate && wTitle) {
-            var kwW = [cellText(cells, 13), cellText(cells, 14)].filter(Boolean).join(" ");
+          if (wTitle && lastWeeklyYymmdd) {
+            var kwWBase = [wKwRaw || lastWeeklyKeywords, cellText(cells, 14)]
+              .filter(Boolean)
+              .join(" ");
+            var kwW = joinKeywordParts([kwWBase, rowTags]);
             items.push({
-              date: wDate,
+              date: lastWeeklyYymmdd,
               type: "weekly",
               title: wTitle,
-              platform: cellText(cells, 12),
+              platform: wPlRaw || lastWeeklyPlatform,
               genre: "",
-              keywords: kwW
+              keywords: kwW,
+              hashtags: ""
             });
           }
 
+          var mDateFromHeader = parseKoreanDateToYYMMDD(cellText(cells, 16));
+          if (mDateFromHeader) {
+            lastMonthlyDateStr = lastDayYYMMDDInMonth(mDateFromHeader);
+            lastMPlatform = "";
+            lastMKeywords = "";
+          }
+          var mPlRaw = cellText(cells, 20);
+          if (mPlRaw) lastMPlatform = mPlRaw;
+          var mKwRaw = cellText(cells, 21);
+          if (mKwRaw) lastMKeywords = mKwRaw;
           var mTitle = cellText(cells, 19);
-          if (mTitle && dDate) {
-            var mDate = lastDayYYMMDDInMonth(dDate);
-            var kwM = [cellText(cells, 21), cellText(cells, 22)].filter(Boolean).join(" ");
-            items.push({
-              date: mDate,
-              type: "monthly",
-              title: mTitle,
-              platform: cellText(cells, 20),
-              genre: "",
-              keywords: kwM
-            });
+          if (mTitle) {
+            var mDateStr = lastMonthlyDateStr;
+            if (!mDateStr && dDate) mDateStr = lastDayYYMMDDInMonth(dDate);
+            if (mDateStr) {
+              var kwMBase = [mKwRaw || lastMKeywords, cellText(cells, 22)]
+                .filter(Boolean)
+                .join(" ");
+              var kwM = joinKeywordParts([kwMBase, rowTags]);
+              items.push({
+                date: mDateStr,
+                type: "monthly",
+                title: mTitle,
+                platform: mPlRaw || lastMPlatform,
+                genre: "",
+                keywords: kwM,
+                hashtags: ""
+              });
+            }
           }
         }
 
@@ -433,14 +645,49 @@
         return "";
       }
 
+      function archiveMetaLine(item) {
+        var parts = [item.platform, item.genre].filter(function (s) {
+          return s && String(s).trim();
+        });
+        return parts.join(" · ");
+      }
+
+      function archiveTagsLine(item) {
+        return (item.keywords && String(item.keywords).trim()) || "";
+      }
+
       function matchItem(item, query, typeFilter) {
         if (typeFilter && item.type !== typeFilter) return false;
         if (!query || !query.trim()) return true;
         var q = query.trim().toLowerCase();
-        var text = [item.title, item.platform, item.genre, item.keywords].filter(Boolean).join(" ");
+        var legacyTags = item.hashtags || "";
+        var hashTitle = extractHashTagsFromText(item.title || "");
+        var hashKw = extractHashTagsFromText(item.keywords || "");
+        var text = [
+          item.title,
+          item.platform,
+          item.genre,
+          item.keywords,
+          legacyTags,
+          hashTitle,
+          hashKw
+        ]
+          .filter(Boolean)
+          .join(" ");
         var keywords = (item.keywords || "").split(/[,，\s]+/).filter(Boolean);
-        var combined = (text + " " + keywords.join(" ")).toLowerCase();
-        return combined.indexOf(q) !== -1;
+        var tagTokens = String(legacyTags)
+          .split(/[,，\s]+/)
+          .filter(Boolean);
+        var combined =
+          (text + " " + keywords.join(" ") + " " + tagTokens.join(" ")).toLowerCase();
+        var combinedNoHash = combined.replace(/#/g, "");
+        var qNoHash = q.replace(/^#+/, "");
+        return (
+          combined.indexOf(q) !== -1 ||
+          combinedNoHash.indexOf(q) !== -1 ||
+          combined.indexOf(qNoHash) !== -1 ||
+          combinedNoHash.indexOf(qNoHash) !== -1
+        );
       }
 
       function renderList() {
@@ -466,6 +713,11 @@
               : item.type === "weekly"
                 ? "[W]" + item.date + ".png"
                 : "[M]" + item.date + ".png";
+          var metaLine = archiveMetaLine(item);
+          var tagsLine = archiveTagsLine(item);
+          var tagsBlock = tagsLine
+            ? "<span class=\"archive-item-tags\">" + escapeHtml(tagsLine) + "</span>"
+            : "";
           var li = document.createElement("button");
           li.type = "button";
           li.className = "archive-item";
@@ -485,9 +737,11 @@
             "<span class=\"archive-item-title\">" +
             escapeHtml(item.title || "-") +
             "</span>" +
-            "<span class=\"archive-item-meta\">" +
-            escapeHtml((item.platform || "") + " · " + (item.genre || "")) +
-            "</span></span>";
+            (metaLine
+              ? "<span class=\"archive-item-meta\">" + escapeHtml(metaLine) + "</span>"
+              : "") +
+            tagsBlock +
+            "</span>";
           bindCardImage(li.querySelector(".archive-item-thumb"), thumbFile);
           li.addEventListener("click", function () {
             openViewer(item.date, item.type);
@@ -504,7 +758,6 @@
         if (type === "daily") {
           html =
             "<div class=\"card-news card-news--today\">" +
-            "<div class=\"card-tab\">★ 오늘의 추천 ★</div>" +
             "<div class=\"card-pair card-pair--daily\">" +
             "<div class=\"card-img-wrap\"><img class=\"card-img\" alt=\"\" src=\"" +
             PIXEL_GIF +
@@ -552,7 +805,16 @@
 
       if (backBtn) backBtn.addEventListener("click", closeViewer);
 
-      if (searchEl) searchEl.addEventListener("input", renderList);
+      var searchDebounceId = null;
+      if (searchEl) {
+        searchEl.addEventListener("input", function () {
+          if (searchDebounceId) clearTimeout(searchDebounceId);
+          searchDebounceId = setTimeout(function () {
+            searchDebounceId = null;
+            renderList();
+          }, 140);
+        });
+      }
       if (typeEl) typeEl.addEventListener("change", renderList);
 
       navBtns.forEach(function (btn) {
@@ -646,7 +908,14 @@
             );
           }
 
-          archiveData = items;
+          archiveData = items
+            .filter(function (item) {
+              return !isFutureArchiveDate(item.date);
+            })
+            .map(function (item) {
+              normalizeItemKeywords(item);
+              return item;
+            });
           renderList();
 
           var linkHtmlBuilt = DEFAULT_FOOTER_HTML;
