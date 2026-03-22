@@ -44,29 +44,24 @@
             <img class="card-img" id="daily-2" alt="오늘의 추천 2" />
           </div>
         </div>
-        <footer class="card-footer">네이버카페 | 웹소설매니아 &nbsp;·&nbsp; 오픈카톡 | 웹소설&amp;웹툰 추천수다방</footer>
       </div>
     </section>
 
     <!-- 이번 주 추천 (위클리) : [W]날짜 → 월요일만 표시 -->
     <section class="block hidden" id="block-weekly" data-type="weekly">
       <div class="card-news card-news--week">
-        <div class="card-tab card-tab--heart">♥ 이번 주 추천 ♥</div>
         <div class="card-img-wrap card-img-wrap--single">
           <img class="card-img" id="weekly-img" alt="이번 주 추천" />
         </div>
-        <footer class="card-footer">네이버카페 | 웹소설매니아 &nbsp;·&nbsp; 오픈카톡 | 웹소설&amp;웹툰 추천수다방</footer>
       </div>
     </section>
 
     <!-- 이번 달 추천 (먼슬리) : [M]날짜 → 그달 마지막 날만 표시 -->
     <section class="block hidden" id="block-monthly" data-type="monthly">
       <div class="card-news card-news--month">
-        <div class="card-tab">이번 달 추천</div>
         <div class="card-img-wrap card-img-wrap--single">
           <img class="card-img" id="monthly-img" alt="이번 달 추천" />
         </div>
-        <footer class="card-footer">네이버카페 | 웹소설매니아 &nbsp;·&nbsp; 오픈카톡 | 웹소설&amp;웹툰 추천수다방</footer>
       </div>
     </section>
   </div>
@@ -81,8 +76,8 @@
       <select class="archive-type" id="archive-type" aria-label="유형 필터">
         <option value="">전체</option>
         <option value="daily">매일</option>
-        <option value="weekly">위클리</option>
-        <option value="monthly">먼슬리</option>
+        <option value="weekly">이번 주</option>
+        <option value="monthly">이번 달</option>
       </select>
     </div>
     <div class="archive-list" id="archive-list"></div>
@@ -361,9 +356,6 @@
 
     (function () {
       var archiveData = [];
-      var DEFAULT_FOOTER_HTML =
-        "네이버카페 | 웹소설매니아 &nbsp;·&nbsp; 오픈카톡 | 웹소설&amp;웹툰 추천수다방";
-      var FOOTER_HTML = DEFAULT_FOOTER_HTML;
       var listEl = document.getElementById("archive-list");
       var emptyEl = document.getElementById("archive-empty");
       var searchEl = document.getElementById("archive-search");
@@ -480,6 +472,12 @@
         return itemT > startOfTodayLocal();
       }
 
+      /** 시트 매일 칸 자리 표시용 제목 — 아카이브에 넣지 않음 */
+      function isPlaceholderDailyTitle(title) {
+        var t = (title || "").trim();
+        return t === "위클리" || t === "먼슬리";
+      }
+
       function extractHashTagsFromText(s) {
         if (!s) return "";
         var m = String(s).match(/#[^\s#，,]+/g);
@@ -512,7 +510,7 @@
 
           var dDate = parseKoreanDateToYYMMDD(cellText(cells, 0));
           var dTitle = cellText(cells, 2);
-          if (dDate && dTitle) {
+          if (dDate && dTitle && !isPlaceholderDailyTitle(dTitle)) {
             var kwDailyBase =
               dailyKwCol >= 0
                 ? cellText(cells, dailyKwCol)
@@ -592,44 +590,6 @@
         return items;
       }
 
-      function parseLinkHtml(doc) {
-        var rows = doc.querySelectorAll("table.waffle tbody tr");
-        var out = [];
-        for (var i = 0; i < rows.length; i++) {
-          var cells = rows[i].cells;
-          if (cells.length < 2) continue;
-          var label = cellText(cells, 0);
-          var a = cells[1].querySelector("a[href]");
-          var href = a ? (a.getAttribute("href") || "").trim() : "";
-          if (label && href.indexOf("http") === 0) out.push({ label: label, href: href });
-        }
-        return out;
-      }
-
-      function buildFooterFromLinks(links) {
-        if (!links || !links.length) return DEFAULT_FOOTER_HTML;
-        var parts = links.map(function (l) {
-          return (
-            "<a href=\"" +
-            escapeHtml(l.href) +
-            "\" target=\"_blank\" rel=\"noopener noreferrer\">" +
-            escapeHtml(l.label) +
-            "</a>"
-          );
-        });
-        return (
-          parts.join(" &nbsp;·&nbsp; ") +
-          " &nbsp;·&nbsp; 오픈카톡 | 웹소설&amp;웹툰 추천수다방"
-        );
-      }
-
-      function applyFooterToCards(html) {
-        FOOTER_HTML = html;
-        document.querySelectorAll(".card-footer").forEach(function (el) {
-          el.innerHTML = html;
-        });
-      }
-
       function formatDate(str) {
         if (!str || str.length !== 6) return str;
         var y = "20" + str.slice(0, 2);
@@ -640,9 +600,30 @@
 
       function typeLabel(type) {
         if (type === "daily") return "매일";
-        if (type === "weekly") return "위클리";
-        if (type === "monthly") return "먼슬리";
+        if (type === "weekly") return "이번 주";
+        if (type === "monthly") return "이번 달";
         return "";
+      }
+
+      /** 시트에서 매일 칸에만 적어두는 자리 표시용 제목 (아카이브에서 제외) */
+      function archiveViewerFooterHtml() {
+        return (
+          '<div class="archive-viewer-footer">' +
+          '<div class="site-footer-divider" aria-hidden="true"></div>' +
+          '<div class="site-footer-links">' +
+          '<a class="site-footer-link site-footer-link--kakao" href="https://open.kakao.com/o/g27r3fLg" target="_blank" rel="noopener noreferrer">' +
+          '<span class="site-footer-link-icon" aria-hidden="true">' +
+          '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none">' +
+          '<rect width="24" height="24" rx="7" fill="#FEE500" />' +
+          '<path fill="#191919" d="M6.75 11.25c0-.41.34-.75.75-.75h1.5c.41 0 .75.34.75.75v1.5c0 .41-.34.75-.75.75h-1.5a.75.75 0 0 1-.75-.75v-1.5zm4 0c0-.41.34-.75.75-.75h1.5c.41 0 .75.34.75.75v1.5c0 .41-.34.75-.75.75h-1.5a.75.75 0 0 1-.75-.75v-1.5zm4 0c0-.41.34-.75.75-.75h1.5c.41 0 .75.34.75.75v1.5c0 .41-.34.75-.75.75h-1.5a.75.75 0 0 1-.75-.75v-1.5z" />' +
+          "</svg></span><span>오픈카톡 · 추천수다방</span></a>" +
+          '<a class="site-footer-link site-footer-link--blog" href="https://blog.naver.com/ss_bookshelf" target="_blank" rel="noopener noreferrer">' +
+          '<span class="site-footer-link-icon site-footer-link-icon--blog" aria-hidden="true">📝</span>' +
+          "<span>네이버 블로그 · 독서리뷰</span></a></div>" +
+          '<p class="site-footer-tagline">' +
+          '<span class="site-footer-tagline-heart" aria-hidden="true">♡</span> 웹소설 웹툰 추천 <span class="site-footer-tagline-heart" aria-hidden="true">♡</span>' +
+          "</p></div>"
+        );
       }
 
       function archiveMetaLine(item) {
@@ -752,11 +733,10 @@
 
       function openViewer(dateStr, type) {
         if (!viewerInner) return;
-        var html = "";
-        var footer = FOOTER_HTML;
+        var cardHtml = "";
 
         if (type === "daily") {
-          html =
+          cardHtml =
             "<div class=\"card-news card-news--today\">" +
             "<div class=\"card-pair card-pair--daily\">" +
             "<div class=\"card-img-wrap\"><img class=\"card-img\" alt=\"\" src=\"" +
@@ -769,30 +749,27 @@
             "\" data-card-file=\"" +
             dateStr +
             "_2.png\" /></div>" +
-            "</div><footer class=\"card-footer\">" + footer + "</footer></div>";
+            "</div></div>";
         } else if (type === "weekly") {
-          html =
+          cardHtml =
             "<div class=\"card-news card-news--week\">" +
-            "<div class=\"card-tab card-tab--heart\">♥ 이번 주 추천 ♥</div>" +
             "<div class=\"card-img-wrap card-img-wrap--single\"><img class=\"card-img\" alt=\"\" src=\"" +
             PIXEL_GIF +
             "\" data-card-file=\"[W]" +
             dateStr +
-            ".png\" /></div>" +
-            "<footer class=\"card-footer\">" + footer + "</footer></div>";
+            ".png\" /></div></div>";
         } else if (type === "monthly") {
-          html =
+          cardHtml =
             "<div class=\"card-news card-news--month\">" +
-            "<div class=\"card-tab\">이번 달 추천</div>" +
             "<div class=\"card-img-wrap card-img-wrap--single\"><img class=\"card-img\" alt=\"\" src=\"" +
             PIXEL_GIF +
             "\" data-card-file=\"[M]" +
             dateStr +
-            ".png\" /></div>" +
-            "<footer class=\"card-footer\">" + footer + "</footer></div>";
+            ".png\" /></div></div>";
         }
 
-        viewerInner.innerHTML = html;
+        viewerInner.innerHTML =
+          '<div class="archive-viewer-stack">' + cardHtml + archiveViewerFooterHtml() + "</div>";
         viewerInner.querySelectorAll("img.card-img[data-card-file]").forEach(function (im) {
           bindCardImage(im, im.getAttribute("data-card-file") || "", { eager: true });
         });
@@ -866,10 +843,6 @@
           }
           return text;
         });
-        var pLink = fetchTextTryUrls([
-          "./link.html",
-          "./" + encodeURI(subKo + "/링크.html")
-        ]);
         var pJson = fetch("./archive.json", { cache: "no-store" })
           .then(function (res) {
             return res.ok ? res.json() : Promise.reject();
@@ -878,10 +851,9 @@
             return null;
           });
 
-        Promise.all([pSheet, pLink, pJson]).then(function (tuple) {
+        Promise.all([pSheet, pJson]).then(function (tuple) {
           var sheetText = tuple[0];
-          var linkText = tuple[1];
-          var jsonData = tuple[2];
+          var jsonData = tuple[1];
           var parser = new DOMParser();
           var items = [];
 
@@ -910,21 +882,15 @@
 
           archiveData = items
             .filter(function (item) {
-              return !isFutureArchiveDate(item.date);
+              if (isFutureArchiveDate(item.date)) return false;
+              if (item.type === "daily" && isPlaceholderDailyTitle(item.title)) return false;
+              return true;
             })
             .map(function (item) {
               normalizeItemKeywords(item);
               return item;
             });
           renderList();
-
-          var linkHtmlBuilt = DEFAULT_FOOTER_HTML;
-          if (linkText) {
-            var ldoc = parser.parseFromString(linkText, "text/html");
-            var links = parseLinkHtml(ldoc);
-            linkHtmlBuilt = buildFooterFromLinks(links);
-          }
-          applyFooterToCards(linkHtmlBuilt);
         });
       }
 
