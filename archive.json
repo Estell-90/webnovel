@@ -1,6 +1,186 @@
 {
   "items": [
     {
+      "date": "260602",
+      "type": "daily",
+      "title": "저주가 친절하고 소꿉친구가 맛있어요",
+      "platform": "리디",
+      "genre": "로맨스",
+      "keywords": "능글남, 철벽녀, 순진녀, 달달",
+      "hashtags": ""
+    },
+    {
+      "date": "260530",
+      "type": "daily",
+      "title": "너 말고, 네 룸메",
+      "platform": "리디",
+      "genre": "로맨스",
+      "keywords": "다각관계, 캠퍼스물, 짝사랑남, 츤데레녀, 일상물",
+      "hashtags": ""
+    },
+    {
+      "date": "260529",
+      "type": "daily",
+      "title": "신애",
+      "platform": "리디",
+      "genre": "로맨스",
+      "keywords": "현대물, 사내연애, 상처남, 능력녀",
+      "hashtags": ""
+    },
+    {
+      "date": "260528",
+      "type": "daily",
+      "title": "개같은 아저씨",
+      "platform": "리디",
+      "genre": "로맨스",
+      "keywords": "소유욕, 결혼, 오해, 나쁜남자, 절륜남, 능글남",
+      "hashtags": ""
+    },
+    {
+      "date": "260527",
+      "type": "daily",
+      "title": "순종적 임신",
+      "platform": "리디",
+      "genre": "로맨스",
+      "keywords": "고수위, 정략결혼, 현대물, 후회물",
+      "hashtags": ""
+    },
+    {
+      "date": "260526",
+      "type": "daily",
+      "title": "파륜",
+      "platform": "리디",
+      "genre": "로맨스",
+      "keywords": "동양풍, 신분차이, 계약관계, 절륜남",
+      "hashtags": ""
+    },
+    {
+      "date": "260524",
+      "type": "daily",
+      "title": "양의 언덕",
+      "platform": "리디",
+      "genre": "로맨스",
+      "keywords": "현대물, 나쁜남자, 후회남, 짝사랑녀",
+      "hashtags": ""
+    },
+    {
+      "date": "260523",
+      "type": "daily",
+      "title": "갓겜하다 갓됨 갓뎀!",
+      "platform": "리디",
+      "genre": "BL",
+      "keywords": "구원, 미남공, 까칠수, 인외존재",
+      "hashtags": ""
+    },
+    {
+      "date": "260522",
+      "type": "daily",
+      "title": "고대문명에서 탈출시켜 줄 히든영웅을 찾습니다",
+      "platform": "리디",
+      "genre": "BL",
+      "keywords": "시대물, 사건물, 강공, 무심수",
+      "hashtags": ""
+    },
+    {
+      "date": "260521",
+      "type": "daily",
+      "title": "새신부",
+      "platform": "리디",
+      "genre": "BL",
+      "keywords": "미남공, 다정공, 미인수, 다정수",
+      "hashtags": ""
+    },
+    {
+      "date": "260520",
+      "type": "daily",
+      "title": "그랑블루",
+      "platform": "리디",
+      "genre": "BL",
+      "keywords": "현대물, 미남공, 미인수",
+      "hashtags": ""
+    },
+    {
+      "date": "260519",
+      "type": "daily",
+      "title": "솔트 소사이어티",
+      "platform": "리디",
+      "genre": "BL",
+      "keywords": "미남수, 삽질물, 후회공, 임신수",
+      "hashtags": ""
+    },
+    {
+      "date": "260517",
+      "type": "daily",
+      "title": "오늘부터 천생배필",
+      "platform": "리디",
+      "genre": "BL",
+      "keywords": "현대물, 집착공, 미인수",
+      "hashtags": ""
+    },
+    {
+      "date": "260516",
+      "type": "daily",
+      "title": "30억의 주인",
+      "platform": "리디",
+      "genre": "BL",
+      "keywords": "구원, 미남공, 힐링물, 애절물, 미인수",
+      "hashtags": ""
+    },
+    {
+      "date": "260515",
+      "type": "daily",
+      "title": "킵 고잉 크레이지",
+      "platform": "리디",
+      "genre": "BL",
+      "keywords": "미남수, 현대물, 달달물, 일상물, 라이벌, 스포츠",
+      "hashtags": ""
+    },
+    {
+      "date": "260514",
+      "type": "daily",
+      "title": "삼류문파 대사형",
+      "platform": "카카페",
+      "genre": "무협",
+      "keywords": "정통, 환생, 복수, 성장",
+      "hashtags": ""
+    },
+    {
+      "date": "260513",
+      "type": "daily",
+      "title": "임신한 척했는데 남편이 돌아왔다",
+      "platform": "카카페",
+      "genre": "로판",
+      "keywords": "오해물, 환생, 능력남, 능력녀",
+      "hashtags": ""
+    },
+    {
+      "date": "260512",
+      "type": "daily",
+      "title": "남주들과 외딴섬에 갇혀버렸다",
+      "platform": "카카페",
+      "genre": "로판",
+      "keywords": "회귀물, 빙의, 라이벌, 상처남",
+      "hashtags": ""
+    },
+    {
+      "date": "260510",
+      "type": "daily",
+      "title": "아기님 캐시로 로판 달린다",
+      "platform": "카카페",
+      "genre": "로판",
+      "keywords": "가족물, 육아물, 힐링물, 개그",
+      "hashtags": ""
+    },
+    {
+      "date": "260509",
+      "type": "daily",
+      "title": "로열 셰프 영애님",
+      "platform": "카카페",
+      "genre": "로판",
+      "keywords": "환생, 성장, 힐링물, 능력녀",
+      "hashtags": ""
+    },
+    {
       "date": "260508",
       "type": "daily",
       "title": "내가 M이라니",
