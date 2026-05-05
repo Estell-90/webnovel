@@ -430,6 +430,50 @@
         return -1;
       }
 
+      function findNthHeaderIndex(cells, regex, nth) {
+        if (!cells) return -1;
+        var hit = 0;
+        var i;
+        for (i = 0; i < cells.length; i++) {
+          var t = (cells[i].textContent || "").trim();
+          if (!regex.test(t)) continue;
+          if (hit === nth) return i;
+          hit++;
+        }
+        return -1;
+      }
+
+      function detectSheetColumns(trs) {
+        var cells = trs && trs.length >= 2 ? trs[1].cells : null;
+        var dailyTitle = findNthHeaderIndex(cells, /^제목$/, 0);
+        var weeklyTitle = findNthHeaderIndex(cells, /^제목$/, 1);
+        var monthlyTitle = findNthHeaderIndex(cells, /^제목$/, 2);
+        var weeklyPlatform = findNthHeaderIndex(cells, /^플랫폼$/, 1);
+        var monthlyPlatform = findNthHeaderIndex(cells, /^플랫폼$/, 2);
+        var weeklyKeyword = findNthHeaderIndex(cells, /^키워드\s*$/, 1);
+        var monthlyKeyword = findNthHeaderIndex(cells, /^키워드\s*$/, 2);
+        var weeklyDate = findNthHeaderIndex(cells, /^날짜$/, 1);
+        var monthlyDate = findNthHeaderIndex(cells, /^날짜$/, 2);
+        if (monthlyDate < 0 && monthlyTitle >= 0) monthlyDate = monthlyTitle - 3;
+        return {
+          dailyDate: 0,
+          dailyTitle: dailyTitle >= 0 ? dailyTitle : 2,
+          dailyPlatform: 3,
+          dailyGenre: 4,
+          dailyKeyword: findDailyKeywordColumnIndex(trs),
+          weeklyDate: weeklyDate >= 0 ? weeklyDate : 8,
+          weeklyTitle: weeklyTitle >= 0 ? weeklyTitle : 11,
+          weeklyPlatform: weeklyPlatform >= 0 ? weeklyPlatform : 12,
+          weeklyKeyword: weeklyKeyword >= 0 ? weeklyKeyword : 13,
+          weeklyExtraKeyword: weeklyKeyword >= 0 ? weeklyKeyword + 1 : 14,
+          monthlyDate: monthlyDate >= 0 ? monthlyDate : 16,
+          monthlyTitle: monthlyTitle >= 0 ? monthlyTitle : 19,
+          monthlyPlatform: monthlyPlatform >= 0 ? monthlyPlatform : 20,
+          monthlyKeyword: monthlyKeyword >= 0 ? monthlyKeyword : 21,
+          monthlyExtraKeyword: monthlyKeyword >= 0 ? monthlyKeyword + 1 : 22
+        };
+      }
+
       function joinKeywordParts(parts) {
         var out = [];
         var j;
@@ -494,7 +538,7 @@
         if (!tbody) return [];
         var trs = tbody.querySelectorAll("tr");
         var tagCol = findHashtagColumnIndex(trs);
-        var dailyKwCol = findDailyKeywordColumnIndex(trs);
+        var cols = detectSheetColumns(trs);
         var items = [];
         var lastWeeklyYymmdd = null;
         var lastWeeklyPlatform = "";
@@ -508,34 +552,34 @@
 
           var rowTags = tagCol >= 0 ? cellText(cells, tagCol) : "";
 
-          var dDate = parseKoreanDateToYYMMDD(cellText(cells, 0));
-          var dTitle = cellText(cells, 2);
+          var dDate = parseKoreanDateToYYMMDD(cellText(cells, cols.dailyDate));
+          var dTitle = cellText(cells, cols.dailyTitle);
           if (dDate && dTitle && !isPlaceholderDailyTitle(dTitle)) {
             var kwDailyBase =
-              dailyKwCol >= 0
-                ? cellText(cells, dailyKwCol)
+              cols.dailyKeyword >= 0
+                ? cellText(cells, cols.dailyKeyword)
                 : [cellText(cells, 5), cellText(cells, 6)].filter(Boolean).join(" ");
             var kwDaily = joinKeywordParts([kwDailyBase, rowTags]);
             items.push({
               date: dDate,
               type: "daily",
               title: dTitle,
-              platform: cellText(cells, 3),
-              genre: cellText(cells, 4),
+              platform: cellText(cells, cols.dailyPlatform),
+              genre: cellText(cells, cols.dailyGenre),
               keywords: kwDaily,
               hashtags: ""
             });
           }
 
-          var wDateCell = parseKoreanDateToYYMMDD(cellText(cells, 8));
+          var wDateCell = parseKoreanDateToYYMMDD(cellText(cells, cols.weeklyDate));
           if (wDateCell) lastWeeklyYymmdd = wDateCell;
-          var wPlRaw = cellText(cells, 12);
+          var wPlRaw = cellText(cells, cols.weeklyPlatform);
           if (wPlRaw) lastWeeklyPlatform = wPlRaw;
-          var wKwRaw = cellText(cells, 13);
+          var wKwRaw = cellText(cells, cols.weeklyKeyword);
           if (wKwRaw) lastWeeklyKeywords = wKwRaw;
-          var wTitle = cellText(cells, 11);
+          var wTitle = cellText(cells, cols.weeklyTitle);
           if (wTitle && lastWeeklyYymmdd) {
-            var kwWBase = [wKwRaw || lastWeeklyKeywords, cellText(cells, 14)]
+            var kwWBase = [wKwRaw || lastWeeklyKeywords, cellText(cells, cols.weeklyExtraKeyword)]
               .filter(Boolean)
               .join(" ");
             var kwW = joinKeywordParts([kwWBase, rowTags]);
@@ -550,22 +594,22 @@
             });
           }
 
-          var mDateFromHeader = parseKoreanDateToYYMMDD(cellText(cells, 16));
+          var mDateFromHeader = parseKoreanDateToYYMMDD(cellText(cells, cols.monthlyDate));
           if (mDateFromHeader) {
             lastMonthlyDateStr = lastDayYYMMDDInMonth(mDateFromHeader);
             lastMPlatform = "";
             lastMKeywords = "";
           }
-          var mPlRaw = cellText(cells, 20);
+          var mPlRaw = cellText(cells, cols.monthlyPlatform);
           if (mPlRaw) lastMPlatform = mPlRaw;
-          var mKwRaw = cellText(cells, 21);
+          var mKwRaw = cellText(cells, cols.monthlyKeyword);
           if (mKwRaw) lastMKeywords = mKwRaw;
-          var mTitle = cellText(cells, 19);
+          var mTitle = cellText(cells, cols.monthlyTitle);
           if (mTitle) {
             var mDateStr = lastMonthlyDateStr;
             if (!mDateStr && dDate) mDateStr = lastDayYYMMDDInMonth(dDate);
             if (mDateStr) {
-              var kwMBase = [mKwRaw || lastMKeywords, cellText(cells, 22)]
+              var kwMBase = [mKwRaw || lastMKeywords, cellText(cells, cols.monthlyExtraKeyword)]
                 .filter(Boolean)
                 .join(" ");
               var kwM = joinKeywordParts([kwMBase, rowTags]);
